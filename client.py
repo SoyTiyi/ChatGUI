@@ -85,9 +85,11 @@ class Client:
 			self.sock.sendall('{}: {}'.format(self.name, message).encode('utf-8'))
 		
 def main(host,port):
+
 	client = Client(host,port)
 	receive = client.start()
 	principal_frame = tk.Tk()
+	principal_frame.iconbitmap('/python.png')
 	principal_frame.title('Crypto Chat!!!!')
 	
 	second_frame = tk.Frame(master = principal_frame, bg="black", fg="green")
@@ -108,6 +110,10 @@ def main(host,port):
         text='Send',
         command=lambda: client.send(text_input)
     )
+    # This button was create to clear the chat, create a method in the client class that clean the messages list
+    btn_clear = tk.Buttin(
+    	master=principal_frame,
+    	text='Clear')
 	frm_entry.grid(row=1, column=0, padx=10, sticky="ew")
 	btn_send.grid(row=1, column=1, pady=10, sticky="ew")
 	principal_frame.rowconfigure(0, minsize=500, weight=1)
@@ -115,13 +121,20 @@ def main(host,port):
 	principal_frame.columnconfigure(0, minsize=500, weight=1)
 	principal_frame.columnconfigure(1, minsize=200, weight=0)
 	principal_frame.mainloop()
+
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Chatroom Server')
 	parser.add_argument('host', help='Interfaz de escucha')
-	parser.add_argument('-p', metavar='PORT', type=int, default=1234,
-                        help='TCP port (1234')
 	args = parser.parse_args()
-	main(args.host, args.p)		
+	if(len(args)==1){
+		main(args.host, 1234)		
+	}
+	else{
+		print("Como usar Chatroom >:v")
+		print("[*] python/python3 client.py IP")
+		print("[*] Si es a nivel local, entonces =>")
+		print("                                    [*] python3 client.py localhost")
+	}
 
 
 

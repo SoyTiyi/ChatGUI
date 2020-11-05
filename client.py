@@ -90,7 +90,7 @@ def main(host,port):
 	principal_frame = tk.Tk()
 	principal_frame.title('Crypto Chat!!!!')
 	
-	second_frame = tk.Frame(master = principal_frame)
+	second_frame = tk.Frame(master = principal_frame, bg="black", fg="green")
 	scroll = tk.Scrollbar(master = second_frame )
 	messages = tk.Listbox(master=second_frame, yscrollcommand=scroll.set)
 	messages.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)

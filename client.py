@@ -110,9 +110,6 @@ def main(host,port):
 	interfaz.columnconfigure(0, minsize=400, weight=1)
 	interfaz.columnconfigure(1, minsize=100, weight=0)
 	interfaz.columnconfigure(2, minsize=100, weight=0)
-	#scroll = tk.Scrollbar(master=frame_mensajes,bg='green')
-	#scroll.pack(side=tk.RIGHT, fill=tk.Y, expand=False)
-	#yscrollcommand=scroll.set
 	lista_mensajes = tk.Listbox(master=frame_mensajes, bg='black', fg='green')
 	lista_mensajes.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 	client.messages = lista_mensajes

@@ -7,6 +7,7 @@ import tkinter as tk
 from tkinter import *
 import tkinter.ttk as ttk
 from tkinter.ttk import *
+from datetime import datetime
 
 class Send(threading.Thread):
 	def __init__(self,sock,name):
@@ -37,10 +38,11 @@ class Receive(threading.Thread):
 
 	def run(self):
 		while True:
+			now = datetime.now()
 			message = self.sock.recv(1024)
 			if message: 
 				if self.message:
-					self.message.insert(tk.END, message)					
+					self.message.insert(tk.END, str(now) +' '+ str(message))					
 				print('\r{}\n{}:'.format(message.decode('utf-8'), self.name), end = '')
 					
 			else: 
@@ -56,11 +58,11 @@ class Client:
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.name = None
 		self.messages = None
-
 	def start(self):
 		print('Conectandose a {}:{}...'.format(self.host, self.port))
 		self.sock.connect((self.host, self.port))
-		print('Conexion Exitosa a {}:{}'.format(self.host, self.port))
+		now = datetime.now()
+		print('Conexion Exitosa a {}:{} a las {}'.format(self.host, self.port, now))
 		print('Ingresa tu nombre....')
 		self.name = input('Nombre: ')
 		print('Hola {}!!'.format(self.name))
@@ -71,13 +73,14 @@ class Client:
 
 		self.sock.sendall('Server: {} se ha unido al chat!'.format(self.name).encode('utf-8'))
 		print("Para salir escriba quit()")
-		print('{}: '.format(self.name), end = '')
+		print('CriptoChat ~ {}: '.format(self.name), end = '')
 
 		return receive
 	def send(self, text_input):
 		message = text_input.get()
 		text_input.delete(0, tk.END)
-		self.messages.insert(tk.END, '{}: {}'.format(self.name, message))
+		now = datetime.now()
+		self.messages.insert(tk.END, '{} ~{}: {}'.format(now,self.name, message))
 		if message == 'quit()':
 			self.sock.sendall('Server: {} se ha ido del chat'.format(self.name).encode('utf-8'))
 			print("\nBYe.....")
@@ -90,40 +93,55 @@ def main(host,port):
 
 	client = Client(host,port)
 	receive = client.start()
-	principal_frame = tk.Tk()
-	#principal_frame.iconbitmap('/python.png')
-	principal_frame.title('Crypto Chat!!!!')
-
+	interfaz = tk.Tk()
+	interfaz.iconphoto(False, tk.PhotoImage(file='/home/soytiyi/Escritorio/Universidad/chat/python.png'))
+	interfaz.title("Cripto chat!!!")
+	def change_bg():
+		interfaz.config(background='red')
 	s = ttk.Style()
-	s.configure("SecondFrame", background='black')
-	
-	second_frame = tk.Frame(master = principal_frame, bg='green')
-
-	scroll = tk.Scrollbar(master = second_frame )
-	messages = tk.Listbox(master=second_frame, yscrollcommand=scroll.set)
-	messages.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-	scroll.pack(side=tk.RIGHT, fill=tk.Y, expand=False)
-	client.messages = messages
-	receive.message = messages
-	second_frame.grid(row=0, column=0, columnspan=2, sticky="nsew")
-	frm_entry = tk.Frame(master=principal_frame)
-	text_input = tk.Entry(master=frm_entry)
+	s.configure('message.TFrame', bg='black', fg='green')
+	frame_mensajes = tk.Frame(master=interfaz)
+	frame_mensajes.configure(bg='black')
+	frame_mensajes.grid(row=0, column=0, columnspan=3, sticky="nsew")
+	container = tk.Frame(master=interfaz, background="#808080")
+	interfaz.config(bg='black')
+	interfaz.rowconfigure(0,minsize=400, weight=1)
+	interfaz.rowconfigure(1, minsize=50, weight=0)
+	interfaz.columnconfigure(0, minsize=400, weight=1)
+	interfaz.columnconfigure(1, minsize=100, weight=0)
+	interfaz.columnconfigure(2, minsize=100, weight=0)
+	#scroll = tk.Scrollbar(master=frame_mensajes,bg='green')
+	#scroll.pack(side=tk.RIGHT, fill=tk.Y, expand=False)
+	#yscrollcommand=scroll.set
+	lista_mensajes = tk.Listbox(master=frame_mensajes, bg='black', fg='green')
+	lista_mensajes.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+	client.messages = lista_mensajes
+	receive.message = lista_mensajes
+	text_input = tk.Entry(master=container)
 	text_input.pack(fill=tk.BOTH, expand=True)
 	text_input.bind("<Return>", lambda x: client.send(text_input))
 	text_input.insert(0, "")
 	btn_send = tk.Button(
-        master=principal_frame,
-        text='Send',
-        command=lambda: client.send(text_input)
-    )
-    # This button was create to clear the chat, create a method in the client class that clean the messages list
-	frm_entry.grid(row=1, column=0, padx=10, sticky="ew")
-	btn_send.grid(row=1, column=1, pady=10, sticky="ew")
-	principal_frame.rowconfigure(0, minsize=500, weight=1)
-	principal_frame.rowconfigure(1, minsize=50, weight=0)
-	principal_frame.columnconfigure(0, minsize=500, weight=1)
-	principal_frame.columnconfigure(1, minsize=200, weight=0)
-	principal_frame.mainloop()
+		master=interfaz,
+		text='Send',
+		command=lambda: client.send(text_input),
+		bg='green'
+	)
+	def clearListBox():
+		lista_mensajes.delete('0','end')
+
+	clear = tk.Button(
+		master=interfaz,
+		text='Clear',
+		bg='green',
+		command = clearListBox
+	)
+
+	container.grid(row=1, column=0, padx=10, sticky="ew")
+	btn_send.grid(row=1, column=1, pady=10, sticky="nsew")
+	clear.grid(row=1, column=2, pady=10, sticky="nsew")
+	interfaz.mainloop()
+
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Chatroom Server')

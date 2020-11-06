@@ -4,7 +4,9 @@ import argparse
 import sys
 import os
 import tkinter as tk
-
+from tkinter import *
+import tkinter.ttk as ttk
+from tkinter.ttk import *
 
 class Send(threading.Thread):
 	def __init__(self,sock,name):
@@ -89,10 +91,14 @@ def main(host,port):
 	client = Client(host,port)
 	receive = client.start()
 	principal_frame = tk.Tk()
-	principal_frame.iconbitmap('/python.png')
+	#principal_frame.iconbitmap('/python.png')
 	principal_frame.title('Crypto Chat!!!!')
+
+	s = ttk.Style()
+	s.configure("SecondFrame", background='black')
 	
-	second_frame = tk.Frame(master = principal_frame, bg="black", fg="green")
+	second_frame = tk.Frame(master = principal_frame, bg='green')
+
 	scroll = tk.Scrollbar(master = second_frame )
 	messages = tk.Listbox(master=second_frame, yscrollcommand=scroll.set)
 	messages.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -111,9 +117,6 @@ def main(host,port):
         command=lambda: client.send(text_input)
     )
     # This button was create to clear the chat, create a method in the client class that clean the messages list
-    btn_clear = tk.Buttin(
-    	master=principal_frame,
-    	text='Clear')
 	frm_entry.grid(row=1, column=0, padx=10, sticky="ew")
 	btn_send.grid(row=1, column=1, pady=10, sticky="ew")
 	principal_frame.rowconfigure(0, minsize=500, weight=1)
@@ -126,15 +129,11 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Chatroom Server')
 	parser.add_argument('host', help='Interfaz de escucha')
 	args = parser.parse_args()
-	if(len(args)==1){
-		main(args.host, 1234)		
-	}
-	else{
-		print("Como usar Chatroom >:v")
-		print("[*] python/python3 client.py IP")
-		print("[*] Si es a nivel local, entonces =>")
-		print("                                    [*] python3 client.py localhost")
-	}
+	print("Como usar Chatroom >:v")
+	print("[*] python/python3 client.py IP")
+	print("[*] Si es a nivel local, entonces =>")
+	print("                                    [*] python3 client.py localhost")
+	main(args.host, 1234)		
 
 
 

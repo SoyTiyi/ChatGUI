@@ -94,7 +94,8 @@ def main(host,port):
 	client = Client(host,port)
 	receive = client.start()
 	interfaz = tk.Tk()
-	interfaz.iconphoto(False, tk.PhotoImage(file='/home/soytiyi/Escritorio/Universidad/chat/python.png'))
+	#Tiene que cambiar la direccion de la imagen dependiendo de donde descarguen el repositorio
+	interfaz.iconphoto(False, tk.PhotoImage(file='/home/soytiyi/Escritorio/Universidad/ChatGUI/python.png'))
 	interfaz.title("Cripto chat!!!")
 	def change_bg():
 		interfaz.config(background='red')

@@ -8,132 +8,156 @@ from tkinter import *
 import tkinter.ttk as ttk
 from tkinter.ttk import *
 from datetime import datetime
+import math 
 
 class Send(threading.Thread):
-	def __init__(self,sock,name):
-		super().__init__()
-		self.sock = sock
-		self.name = name
+    def __init__(self,sock,name):
+        super().__init__()
+        self.sock = sock
+        self.name = name
 
-	def run(self):
-		while True:
-			sys.stdout.flush()
-			message = sys.stdin.readline()[:-1]
-			if message == 'quit()':
-				self.sock.sendall('Server: {} ha dejado el chat'.format(self.name).encode('utf-8'))
-				break
-			else:
-				self.sock.sendall('{}:{}'.format(self.name, message).encode('utf-8'))
-		self.sock.close()
-		os._exit(0)
+    def run(self):
+        while True:
+            sys.stdout.flush()
+            message = sys.stdin.readline()[:-1]
+            if message == 'quit()':
+                self.sock.sendall('Server: {} ha dejado el chat'.format(self.name).encode('utf-8'))
+                break
+            else:
+                self.sock.sendall('{}:{}'.format(self.name, message).encode('utf-8'))
+        self.sock.close()
+        os._exit(0)
 
 class Receive(threading.Thread):
-	def __init__(self,sock,name):
-		super().__init__()
-		self.message = None
-		self.sock = sock
-		self.name = name
+    def __init__(self,sock,name):
+        super().__init__()
+        self.message = None
+        self.sock = sock
+        self.name = name
 
-	def run(self):
-		while True:
-			now = datetime.now()
-			message = self.sock.recv(1024)
-			if message: 
-				if self.message:
-					self.message.insert(tk.END, str(now) +' '+ str(message))					
-			else: 
-				self.sock.close()
-				os._exit(0)
+    def run(self):
+        while True:
+            now = datetime.now()
+            message = self.sock.recv(1024)
+            if message: 
+                if self.message:
+                    self.message.insert(tk.END, str(now) +' '+ str(message))					
+            else: 
+                self.sock.close()
+                os._exit(0)
 
 class Client:
-	def __init__(self,host,port):
-		self.port = port
-		self.host = host
-		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.name = None
-		self.messages = None
-	def start(self):
-		self.sock.connect((self.host, self.port))
-		now = datetime.now()
-		print('Ingresa tu nombre....')
-		self.name = input('Nombre: ')
-		print('Hola {}!!'.format(self.name))
-		send = Send(self.sock, self.name)
-		receive = Receive(self.sock, self.name)
-		send.start()
-		receive.start()
+    def __init__(self,host,port):
+        self.port = port
+        self.host = host
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.name = None
+        self.messages = None
+        self.msg = None
 
-		self.sock.sendall('Server: {} se ha unido al chat!'.format(self.name).encode('utf-8'))
-		return receive
-	def send(self, text_input):
-		message = text_input.get()
-		text_input.delete(0, tk.END)
-		now = datetime.now()
-		self.messages.insert(tk.END, '{} ~{}: {}'.format(now,self.name, message))
-		if message == 'quit()':
-			self.sock.sendall('Server: {} se ha ido del chat'.format(self.name).encode('utf-8'))
-			self.sock.close()
-			os._exit(0)
-		else:
-			self.sock.sendall('{}: {}'.format(self.name, message).encode('utf-8'))
-		
+    def encryptMessage(self,msg):
+        self.msg = msg
+        key = "HACK"
+        cipher = "" 
+        k_indx = 0
+        msg_len = float(len(msg)) 
+        msg_lst = list(msg) 
+        key_lst = sorted(list(key)) 
+        col = len(key) 
+        row = int(math.ceil(msg_len / col)) 
+        fill_null = int((row * col) - msg_len) 
+        msg_lst.extend('_' * fill_null) 
+        matrix = [msg_lst[i: i + col]
+                  for i in range(0, len(msg_lst), col)]
+        for _ in range(col): 
+            curr_idx = key.index(key_lst[k_indx]) 
+            cipher += ''.join([row[curr_idx]
+                               for row in matrix])
+            k_indx += 1
+        return cipher
+
+    def start(self):
+        self.sock.connect((self.host, self.port))
+        now = datetime.now()
+        print('Ingresa tu nombre....')
+        self.name = input('Nombre: ')
+        print('Hola {}!!'.format(self.name))
+        send = Send(self.sock, self.name)
+        receive = Receive(self.sock, self.name)
+        send.start()
+        receive.start()
+        self.sock.sendall('Server: {} se ha unido al chat!'.format(self.name).encode('utf-8'))
+        return receive
+
+    def send(self, text_input):
+        message = text_input.get()
+        text_input.delete(0, tk.END)
+        now = datetime.now()
+        self.messages.insert(tk.END, '{} ~{}: {}'.format(now,self.name, message))
+        if message == 'quit()':
+            self.sock.sendall('Server: {} se ha ido del chat'.format(self.name).encode('utf-8'))
+            self.sock.close()
+            os._exit(0)
+        else:
+            print("Este es el mensaje sin encriptar ---> "+message)
+            self.sock.sendall('{}: {}'.format(self.name, self.encryptMessage(message)).encode('utf-8'))
+
 def main(host,port):
+    client = Client(host,port)
+    receive = client.start()
+    interfaz = tk.Tk()
+    #Tiene que cambiar la direccion de la imagen dependiendo de donde descarguen el repositorio
+    interfaz.iconphoto(False, tk.PhotoImage(file='/home/kali/ChatGUI/python.png'))
+    interfaz.title("Cripto chat!!!")
+    def change_bg():
+        interfaz.config(background='red')
+    s = ttk.Style()
+    s.configure('message.TFrame', bg='black', fg='green')
+    frame_mensajes = tk.Frame(master=interfaz)
+    frame_mensajes.configure(bg='black')
+    frame_mensajes.grid(row=0, column=0, columnspan=3, sticky="nsew")
+    container = tk.Frame(master=interfaz, background="#808080")
+    interfaz.config(bg='black')
+    interfaz.rowconfigure(0,minsize=400, weight=1)
+    interfaz.rowconfigure(1, minsize=50, weight=0)
+    interfaz.columnconfigure(0, minsize=400, weight=1)
+    interfaz.columnconfigure(1, minsize=100, weight=0)
+    interfaz.columnconfigure(2, minsize=100, weight=0)
+    lista_mensajes = tk.Listbox(master=frame_mensajes, bg='black', fg='green')
+    lista_mensajes.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+    client.messages = lista_mensajes
+    receive.message = lista_mensajes
+    text_input = tk.Entry(master=container)
+    text_input.pack(fill=tk.BOTH, expand=True)
+    text_input.bind("<Return>", lambda x: client.send(text_input))
+    text_input.insert(0, "")
+    btn_send = tk.Button(
+        master=interfaz,
+        text='Send',
+        command=lambda: client.send(text_input),
+        bg='green'
+    )
+    def clearListBox():
+        lista_mensajes.delete('0','end')
 
-	client = Client(host,port)
-	receive = client.start()
-	interfaz = tk.Tk()
-	#Tiene que cambiar la direccion de la imagen dependiendo de donde descarguen el repositorio
-	interfaz.iconphoto(False, tk.PhotoImage(file='/home/soytiyi/Escritorio/Universidad/ChatGUI/python.png'))
-	interfaz.title("Cripto chat!!!")
-	def change_bg():
-		interfaz.config(background='red')
-	s = ttk.Style()
-	s.configure('message.TFrame', bg='black', fg='green')
-	frame_mensajes = tk.Frame(master=interfaz)
-	frame_mensajes.configure(bg='black')
-	frame_mensajes.grid(row=0, column=0, columnspan=3, sticky="nsew")
-	container = tk.Frame(master=interfaz, background="#808080")
-	interfaz.config(bg='black')
-	interfaz.rowconfigure(0,minsize=400, weight=1)
-	interfaz.rowconfigure(1, minsize=50, weight=0)
-	interfaz.columnconfigure(0, minsize=400, weight=1)
-	interfaz.columnconfigure(1, minsize=100, weight=0)
-	interfaz.columnconfigure(2, minsize=100, weight=0)
-	lista_mensajes = tk.Listbox(master=frame_mensajes, bg='black', fg='green')
-	lista_mensajes.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-	client.messages = lista_mensajes
-	receive.message = lista_mensajes
-	text_input = tk.Entry(master=container)
-	text_input.pack(fill=tk.BOTH, expand=True)
-	text_input.bind("<Return>", lambda x: client.send(text_input))
-	text_input.insert(0, "")
-	btn_send = tk.Button(
-		master=interfaz,
-		text='Send',
-		command=lambda: client.send(text_input),
-		bg='green'
-	)
-	def clearListBox():
-		lista_mensajes.delete('0','end')
+    clear = tk.Button(
+        master=interfaz,
+        text='Clear',
+        bg='green',
+        command = clearListBox
+    )
 
-	clear = tk.Button(
-		master=interfaz,
-		text='Clear',
-		bg='green',
-		command = clearListBox
-	)
-
-	container.grid(row=1, column=0, padx=10, sticky="ew")
-	btn_send.grid(row=1, column=1, pady=10, sticky="nsew")
-	clear.grid(row=1, column=2, pady=10, sticky="nsew")
-	interfaz.mainloop()
+    container.grid(row=1, column=0, padx=10, sticky="ew")
+    btn_send.grid(row=1, column=1, pady=10, sticky="nsew")
+    clear.grid(row=1, column=2, pady=10, sticky="nsew")
+    interfaz.mainloop()
 
 
 if __name__ == '__main__':
-	parser = argparse.ArgumentParser(description='Chatroom Server')
-	parser.add_argument('host', help='Interfaz de escucha')
-	args = parser.parse_args()
-	main(args.host, 1234)		
+    parser = argparse.ArgumentParser(description='Chatroom Server')
+    parser.add_argument('host', help='Interfaz de escucha')
+    args = parser.parse_args()
+    main(args.host, 1234)		
 
 
 

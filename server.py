@@ -64,11 +64,11 @@ class ServerSocket(threading.Thread):
 				os._exit(0)
 
 	if __name__ == '__main__':
-		parser = argparse.ArgumentParser(description='Chatroom Server')
-		parser.add_argument('host', help='Interface the server listensat')
-		parser.add_argument('-p', metavar='PORT', type=int, default=1234,help='TCP port (default 1234)')
-		args = parser.parse_args()
-		server = Server(args.host, args.p)
+		#parser = argparse.ArgumentParser(description='Chatroom Server')
+		#parser.add_argument('host', help='Interface the server listensat')
+		#parser.add_argument('-p', metavar='PORT', type=int, default=1234,help='TCP port (default 1234)')
+		#args = parser.parse_args()
+		server = Server('127.0.0.1', 1234)
 		server.start()
 		exit = threading.Thread(target = exit, args = (server,))
 		exit.start()

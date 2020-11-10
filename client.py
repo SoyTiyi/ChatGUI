@@ -17,7 +17,6 @@ class Send(threading.Thread):
 
 	def run(self):
 		while True:
-			print('{}: '.format(self.name),end='')
 			sys.stdout.flush()
 			message = sys.stdin.readline()[:-1]
 			if message == 'quit()':
@@ -25,7 +24,6 @@ class Send(threading.Thread):
 				break
 			else:
 				self.sock.sendall('{}:{}'.format(self.name, message).encode('utf-8'))
-		print('\nSaliendo....')
 		self.sock.close()
 		os._exit(0)
 
@@ -43,11 +41,7 @@ class Receive(threading.Thread):
 			if message: 
 				if self.message:
 					self.message.insert(tk.END, str(now) +' '+ str(message))					
-				print('\r{}\n{}:'.format(message.decode('utf-8'), self.name), end = '')
-					
 			else: 
-				print('\n Oh no, perdimos la conexion con el servidor')
-				print('\nSaliendo....')
 				self.sock.close()
 				os._exit(0)
 
@@ -59,10 +53,8 @@ class Client:
 		self.name = None
 		self.messages = None
 	def start(self):
-		print('Conectandose a {}:{}...'.format(self.host, self.port))
 		self.sock.connect((self.host, self.port))
 		now = datetime.now()
-		print('Conexion Exitosa a {}:{} a las {}'.format(self.host, self.port, now))
 		print('Ingresa tu nombre....')
 		self.name = input('Nombre: ')
 		print('Hola {}!!'.format(self.name))
@@ -72,9 +64,6 @@ class Client:
 		receive.start()
 
 		self.sock.sendall('Server: {} se ha unido al chat!'.format(self.name).encode('utf-8'))
-		print("Para salir escriba quit()")
-		print('CriptoChat ~ {}: '.format(self.name), end = '')
-
 		return receive
 	def send(self, text_input):
 		message = text_input.get()
@@ -83,7 +72,6 @@ class Client:
 		self.messages.insert(tk.END, '{} ~{}: {}'.format(now,self.name, message))
 		if message == 'quit()':
 			self.sock.sendall('Server: {} se ha ido del chat'.format(self.name).encode('utf-8'))
-			print("\nBYe.....")
 			self.sock.close()
 			os._exit(0)
 		else:
@@ -145,10 +133,6 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Chatroom Server')
 	parser.add_argument('host', help='Interfaz de escucha')
 	args = parser.parse_args()
-	print("Como usar Chatroom >:v")
-	print("[*] python/python3 client.py IP")
-	print("[*] Si es a nivel local, entonces =>")
-	print("                                    [*] python3 client.py localhost")
 	main(args.host, 1234)		
 
 

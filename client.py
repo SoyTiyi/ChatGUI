@@ -8,13 +8,20 @@ from tkinter import *
 import tkinter.ttk as ttk
 from tkinter.ttk import *
 from datetime import datetime
-import math 
+import math
+from Crypto.Cipher import XOR
+import base64
 
 class Send(threading.Thread):
     def __init__(self,sock,name):
         super().__init__()
         self.sock = sock
         self.name = name
+
+    def decrypt(self, ciphertext):
+        keyCipher='notsosecretkey'
+        cipher = XOR.new(keyCipher)
+        return cipher.decrypt(base64.b64decode(ciphertext))
 
     def run(self):
         while True:
@@ -24,7 +31,8 @@ class Send(threading.Thread):
                 self.sock.sendall('Server: {} ha dejado el chat'.format(self.name).encode('utf-8'))
                 break
             else:
-                self.sock.sendall('{}:{}'.format(self.name, message).encode('utf-8'))
+                #print(message)
+                self.sock.sendall('{}'.format(self.decrypt(message)).encode('utf-8'))
         self.sock.close()
         os._exit(0)
 
@@ -34,14 +42,23 @@ class Receive(threading.Thread):
         self.message = None
         self.sock = sock
         self.name = name
+        
+    def decrypt(self, ciphertext):
+        ciphertext=ciphertext.decode('utf-8')
+        keyCipher='notsosecretkey'
+        cipher = XOR.new(keyCipher)
+        return cipher.decrypt(base64.b64decode(ciphertext))
 
     def run(self):
         while True:
             now = datetime.now()
             message = self.sock.recv(1024)
+            print("ESTE ES EL MENSAJE------> "+str(message))
+            print("ESTE ES EL MENSAJE DECRYPTADO------> ")
+            #print(self.decrypt(str(message)))
             if message: 
                 if self.message:
-                    self.message.insert(tk.END, str(now) +' '+ str(message))					
+                    self.message.insert(tk.END, str(now) +' '+ str(message))
             else: 
                 self.sock.close()
                 os._exit(0)
@@ -55,26 +72,12 @@ class Client:
         self.messages = None
         self.msg = None
 
-    def encryptMessage(self,msg):
-        self.msg = msg
-        key = "HACK"
-        cipher = "" 
-        k_indx = 0
-        msg_len = float(len(msg)) 
-        msg_lst = list(msg) 
-        key_lst = sorted(list(key)) 
-        col = len(key) 
-        row = int(math.ceil(msg_len / col)) 
-        fill_null = int((row * col) - msg_len) 
-        msg_lst.extend('_' * fill_null) 
-        matrix = [msg_lst[i: i + col]
-                  for i in range(0, len(msg_lst), col)]
-        for _ in range(col): 
-            curr_idx = key.index(key_lst[k_indx]) 
-            cipher += ''.join([row[curr_idx]
-                               for row in matrix])
-            k_indx += 1
-        return cipher
+    def encrypt(self,msg):
+        keyCipher='notsosecretkey'
+        cipher = XOR.new(keyCipher)
+        return base64.b64encode(cipher.encrypt(msg))
+    
+    
 
     def start(self):
         self.sock.connect((self.host, self.port))
@@ -86,7 +89,7 @@ class Client:
         receive = Receive(self.sock, self.name)
         send.start()
         receive.start()
-        self.sock.sendall('Server: {} se ha unido al chat!'.format(self.name).encode('utf-8'))
+        #self.sock.sendall('Server: {} se ha unido al chat!'.format(self.name).encode('utf-8'))
         return receive
 
     def send(self, text_input):
@@ -95,12 +98,12 @@ class Client:
         now = datetime.now()
         self.messages.insert(tk.END, '{} ~{}: {}'.format(now,self.name, message))
         if message == 'quit()':
-            self.sock.sendall('Server: {} se ha ido del chat'.format(self.name).encode('utf-8'))
+            #self.sock.sendall('Server: {} se ha ido del chat'.format(self.name).encode('utf-8'))
             self.sock.close()
             os._exit(0)
         else:
             print("Este es el mensaje sin encriptar ---> "+message)
-            self.sock.sendall('{}: {}'.format(self.name, self.encryptMessage(message)).encode('utf-8'))
+            self.sock.sendall('{}: {}'.format(self.name, self.encrypt(message)).encode('utf-8'))
 
 def main(host,port):
     client = Client(host,port)
